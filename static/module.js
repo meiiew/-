@@ -234,14 +234,14 @@
 			function inquireRely(name){
 				if(toolLibrary.isType(storages.monitorQuote[name],"array")){
 					for(var i=0,len=storages.monitorQuote[name].length;i<len;i++){
-						if(!storages.moduleLoad[name]){//加载
+						if(!storages.moduleLoad[storages.monitorQuote[name][i]]){//加载
 							return false;
 						}
 						if(!inquireRely(storages.monitorQuote[name][i])){
 							return false;
 						}
 					}
-					return true; 
+					return true;
 				}
 				return false;
 			}
