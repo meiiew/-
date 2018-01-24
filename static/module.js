@@ -103,15 +103,16 @@
 				return false;
 			}
 			
+			if(!src && storages.moduleJson[name]){//获取合理的src
+				src = toolLibrary.scriptUrl("get",name);
+			}
+			
 			for(var i=0,len=snapList.length;i<len;i++){//去重，已经加载过
-				if(storages.moduleJson[name] && snapList[i].src === storages.moduleJson[name].src){
+				if(snapList[i].src === src){
 					return true;
 				}
 			}
 			
-			if(!src && storages.moduleJson[name]){
-				src = toolLibrary.scriptUrl("get",name);
-			}
 			this.addScriptDom(name,src);
 			return true;			
 		},
