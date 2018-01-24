@@ -108,7 +108,7 @@
 			}
 			
 			for(var i=0,len=snapList.length;i<len;i++){//去重，已经加载过
-				if(snapList[i].src === src){
+				if(snapList[i].src === src || ~snapList[i].src.indexOf(src)){
 					return true;
 				}
 			}
@@ -205,6 +205,7 @@
 			this.monitorRely(opt.moduleName,opt.quote);
 			if(opt.isDefaultStart){//订阅所有异步加载完成，在自调用本身模块
 				storages.moduleStartUp[opt.moduleName] = true;
+				this.monitorLoad(opt.moduleName);
 			}
 		},
 		registeredList : function(opt){//注册模块
