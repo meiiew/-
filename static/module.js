@@ -1,6 +1,6 @@
 /*
  * 注意：
- * 当前只支持js模块化，css和html的模块化功能将不会加上
+ * 当前只支持js模块化和css模块化，html的模块化功能将不会加上
  * 优先判断第三方cdn地址，如果load失败将依次判断直至src地址，都失败将抛出异常
  * 目前只兼容到ie8。
  * 目前引用的第三方模块，如果出现没有名称的状况，会在moduleMissingName数组中存储。load完后从数组第一项来取。未知情况下，可能发生错乱。没有严格意义上的对号入座。
@@ -66,8 +66,8 @@
 			}
 		},
 		isUrlName : function(name){
-			var isDepot = /(\/)*\.js(\?)?/.test(name.replace(/^\s*|\s*$/mg,""));
-			return isDepot;//true是url
+			var isDepot = /(\/)*\.(js|css)(\?)?/.test(name.replace(/^\s*|\s*$/mg,""));
+			return isDepot;//要么直接返回url，要么直接返回false
 		},
 		urlToName : function(name){
 			var srcCache = [];
@@ -84,21 +84,24 @@
 				list.push(key);
 			}
 			return list;
+		},
+		isUrlScript : function(src){//判断路径是否是script路径
+			return /\.js[0-9A-Za-z|\=|\-|\?]*$/.test(src);
 		}
 	};
 	
 	var logicMain = {//主逻辑
-		excludeLoad : function(name,src){//添加依赖js，并去重
+		excludeLoad : function(name,src){//添加依赖js和css，并去重
 			var snapList = toolLibrary.getDom("script");
 			
 			if(!toolLibrary.isType(name,"string")){
 				return false;
 			}
 			if(name.replace(/^\s*|\s*$/mg,"").length===0){
-				return false;	
+				return false;
 			}
 			
-			if(!storages.moduleJson[name] && !src){
+			if( ~src.indexOf(".js") && !storages.moduleJson[name] && !src){
 				console.error(lang.loadAbnormal.replace(/\{\{name\}\}/mg,name));
 				return false;
 			}
@@ -117,31 +120,45 @@
 			return true;			
 		},
 		addScriptDom : function(name,src){//添加script标签
-			var script = document.createElement("script"),
+			var script = {},
+				styles = {},
+				$head = toolLibrary.getDom("head")[0],
 				pointer = this;
 			
-			script.src=src;
-			script.type="text/javascript";
-			script.charset="UTF-8";
-			script.async="true";
-			toolLibrary.getDom("head")[0].appendChild(script);
+			if(toolLibrary.isUrlScript(src)){//js
+				script = document.createElement("script");
+				script.src=src;
+				script.type="text/javascript";
+				script.charset="UTF-8";
+				script.async="true";
+				$head.appendChild(script);
+				isLoadSuccess();
+			}else{
+				styles = document.createElement('link');
+				styles.href = src;
+				styles.rel = 'stylesheet';
+				styles.type = 'text/css';
+				$head.appendChild(styles);
+			}
 			
-			if(~navigator.userAgent.indexOf("MSIE")){
-				script.onreadystatechange = function(event){
-					if(this.readyState=="loaded"){
-						if(storages.moduleLoad[name] || storages.moduleMissingName.length){
-							successLoad();
-						}else{
-							errorLoad();
+			function isLoadSuccess(){//只判断js加载成功和失败，css因为没有备用地址
+				if(~navigator.userAgent.indexOf("MSIE")){
+					script.onreadystatechange = function(event){
+						if(this.readyState=="loaded"){
+							if(storages.moduleLoad[name] || storages.moduleMissingName.length){
+								successLoad();
+							}else{
+								errorLoad();
+							}
 						}
 					}
-				}
-			}else{
-				script.onload = function(){
-					successLoad();
-				}
-				script.onerror = function(){
-					errorLoad();
+				}else{
+					script.onload = function(){
+						successLoad();
+					}
+					script.onerror = function(){
+						errorLoad();
+					}
 				}
 			}
 			function successLoad(){
@@ -297,8 +314,6 @@
 		getModuleList : function(){//查询所有加载模块
 			return toolLibrary.getModuleData(storages.moduleLoad);
 		}
-		
-		
 	};
 	window.define = function(moduleName,quote,fun,isDefaultStart){
 		var opt = {};
@@ -361,7 +376,7 @@
 			if(builtIn.inquireItem(storages.monitorQuote[name][i])){
 				if(storages.monitorQuote[name][i]==="exports"){
 					isExports = true;
-					exports = this.require(storages.monitorQuote[name][i]);
+					exports = window.require(storages.monitorQuote[name][i]);
 				}
 				requireList.push(exports);
 			}
