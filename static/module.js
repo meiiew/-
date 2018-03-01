@@ -101,7 +101,7 @@
 				return false;
 			}
 			
-			if( ~src.indexOf(".js") && !storages.moduleJson[name] && !src){
+			if( !src && !storages.moduleJson[name]){
 				console.error(lang.loadAbnormal.replace(/\{\{name\}\}/mg,name));
 				return false;
 			}
