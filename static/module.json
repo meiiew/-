@@ -5,12 +5,9 @@
 			"src" : "static/model/jquery-3.2.1.min.js",
 			"cdn" : ["https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"]
 		},
-		"layer" : {
-			"cdn" : ["https://cdn.bootcss.com/layer/3.1.0/layer.js"]
-		},
-		"echarts" : {
-			"src" : "static/model/echarts.js",
-			"cdn" : ["https://cdn.bootcss.com/echarts/4.0.2/echarts-en.min.js"]
+		"page" : {
+			"src" : "static/script/ui/page/page.js",
+			"css" : "static/script/ui/page/page.min.css"
 		}
 	}
 }

@@ -101,7 +101,7 @@
 				return false;
 			}
 			
-			if( !src && !storages.moduleJson[name]){
+			if(!src && !storages.moduleJson[name]){
 				console.error(lang.loadAbnormal.replace(/\{\{name\}\}/mg,name));
 				return false;
 			}
@@ -209,12 +209,16 @@
 				if(builtIn.inquireItem(opt.quote[i])){//加载模块判断是否是内部模块
 					continue;
 				}
+				
 				if(toolLibrary.isUrlName(opt.quote[i])){
 					src = opt.quote[i];
 					srcCache = src.split(".js")[0].split("/");
 					this.excludeLoad(srcCache[srcCache.length-1],src);
-				}else{
+				}else{//库文件模块
 					this.excludeLoad(opt.quote[i]);
+					if(storages.moduleJson[opt.quote[i]] && storages.moduleJson[opt.quote[i]].css){//模块有css文件
+						this.excludeLoad(opt.quote[i],storages.moduleJson[opt.quote[i]].css);
+					}
 				}
 			}
 			
