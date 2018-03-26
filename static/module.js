@@ -66,8 +66,9 @@
 			}
 		},
 		isUrlName : function(name){
-			var isDepot = /(\/)*\.(js|css)(\?)?/.test(name.replace(/^\s*|\s*$/mg,""));
-			return isDepot;//要么直接返回url，要么直接返回false
+			var url = name.replace(/^\s*|\s*$/mg,""),
+				isDepot = /(\/)*\.(js|css)(\?)?/.test(url);
+			return isDepot?url:isDepot;//要么直接返回url，要么直接返回false
 		},
 		urlToName : function(name){
 			var srcCache = [];
@@ -87,12 +88,16 @@
 		},
 		isUrlScript : function(src){//判断路径是否是script路径
 			return /\.js[0-9A-Za-z|\=|\-|\?]*$/.test(src);
+		},
+		isUrlCss : function(src){//判断路径是否是css路径
+			return  /\.css[0-9A-Za-z|\=|\-|\?]*$/.test(src);
 		}
 	};
 	
 	var logicMain = {//主逻辑
 		excludeLoad : function(name,src){//添加依赖js和css，并去重
-			var snapList = toolLibrary.getDom("script");
+			var snapList = toolLibrary.getDom("script"),
+				linkCssList = toolLibrary.getDom("link");
 			
 			if(!toolLibrary.isType(name,"string")){
 				return false;
@@ -110,9 +115,17 @@
 				src = toolLibrary.scriptUrl("get",name);
 			}
 			
-			for(var i=0,len=snapList.length;i<len;i++){//去重，已经加载过
-				if(snapList[i].src === src || ~snapList[i].src.indexOf(src)){
-					return true;
+			if(toolLibrary.isUrlScript(src)){//js
+				for(var i=0,len=snapList.length;i<len;i++){//去重，已经加载过
+					if(snapList[i].src === src || ~snapList[i].src.indexOf(src)){
+						return true;
+					}
+				}
+			}else if(toolLibrary.isUrlCss(src)){//css
+				for(var i=0,len=linkCssList.length;i<len;i++){
+					if(linkCssList[i].href === src || ~linkCssList[i].href.indexOf(src)){
+						return true;
+					}
 				}
 			}
 			
@@ -231,6 +244,7 @@
 		},
 		registeredList : function(opt){//注册模块
 			var isExist = storages.moduleLoad[opt.moduleName]?true:false;
+			
 			storages.moduleLoad[opt.moduleName] = {
 				"defaultFun" : opt.fun,
 				"rely" : opt.quote,
@@ -242,10 +256,11 @@
 			var relyList = [];
 			
 			for(var key in storages.moduleStartUp){
-				if( inquireRely(key) ){
+				if( inquireRely(key)){
 					relyList.push(key);
 				}
 			}
+			
 			for(var i=0,len=relyList.length;i<len;i++){//发送通知到订阅者
 				if(storages.moduleStartUp[relyList[i]]){
 					storages.moduleLoad[relyList[i]].defaultFun();
@@ -275,9 +290,12 @@
 				return false;
 			}
 			for(var i=0,len=quote.length;i<len;i++){
-				nameQuote=toolLibrary.urlToName(quote[i]);
-				list.push(nameQuote);
+				if(!toolLibrary.isUrlCss(quote[i])){//去掉css
+					nameQuote=toolLibrary.urlToName(quote[i]);
+					list.push(nameQuote);
+				}
 			}
+			
 			storages.monitorQuote[name] = list;
 		}
 	}
@@ -360,7 +378,7 @@
 	window.require = function(){
 		var requireData = {},
 			isCache = /^\!/.test(arguments[0]),
-			name = arguments[0].replace(/^\!/,""),
+			name = toolLibrary.urlToName(arguments[0].replace(/^\!/,"")),//url自动转换成name
 			isExports = false,
 			exports = {},
 			requireList = [],
