@@ -253,28 +253,24 @@
 			return !isExist;
 		},
 		monitorLoad : function(name){//监听load,script发生load后判断依赖都加载完
-			var relyList = [];
+//			var relyList = inquireRely(name),
+//				relyOther = inquireRelyOther(relyList);
 			
+			
+			//多层依赖都加载完才可以运行
 			for(var key in storages.moduleStartUp){
-				if( inquireRely(key)){
-					relyList.push(key);
+				if(hasLoadModule(key)){
+					storages.moduleLoad[key].defaultFun();
+					delete storages.moduleStartUp[key];
 				}
 			}
-			
-			for(var i=0,len=relyList.length;i<len;i++){//发送通知到订阅者
-				if(storages.moduleStartUp[relyList[i]]){
-					storages.moduleLoad[relyList[i]].defaultFun();
-					delete storages.moduleStartUp[relyList[i]];
-				}
-			}
-			
-			function inquireRely(name){
-				if(toolLibrary.isType(storages.monitorQuote[name],"array")){
-					for(var i=0,len=storages.monitorQuote[name].length;i<len;i++){
-						if(!storages.moduleLoad[storages.monitorQuote[name][i]]){//加载
+			function hasLoadModule(key){
+				if(toolLibrary.isType(storages.monitorQuote[key],"array")){
+					for(var i=0,len=storages.monitorQuote[key].length;i<len;i++){
+						if(!storages.moduleLoad[storages.monitorQuote[key][i]]){
 							return false;
 						}
-						if(!inquireRely(storages.monitorQuote[name][i])){
+						if(!hasLoadModule(storages.monitorQuote[key][i])){
 							return false;
 						}
 					}
@@ -282,6 +278,33 @@
 				}
 				return false;
 			}
+			
+			function inquireRely(name){//查询此模块的依赖模块
+				var relyModule = [];//依赖此name的模块
+				for(var j in storages.monitorQuote){
+					for(var i=0,len=storages.monitorQuote[j].length;i<len;i++){
+						if(storages.monitorQuote[j][i] === name){
+							relyModule.push(j);
+						}
+					}
+				}
+				return relyModule;
+			}
+			function inquireRelyOther(arr){//查询此依赖的其他依赖
+				var relyOtherModule = [];
+				
+				for(var i=0,len=arr.length;i<len;i++){
+					for(var j=0,leng=storages.monitorQuote[arr[i]];j<leng;j++){
+						if(!storages.moduleLoad[storages.monitorQuote[arr[i]][j]]){//其中有一个模块没执行
+							break;
+						}
+					}
+					relyOtherModule.push(arr[i]);
+				}
+				
+				return relyOtherModule;
+			}
+			
 		},
 		monitorRely : function(name,quote){//订阅，覆盖即可，无需判断有没有重复命名("也不考虑空")
 			var list = [],
