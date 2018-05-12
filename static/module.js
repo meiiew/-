@@ -99,10 +99,16 @@
 			var snapList = toolLibrary.getDom("script"),
 				linkCssList = toolLibrary.getDom("link");
 			
+			
+			
 			if(!toolLibrary.isType(name,"string")){
 				return false;
 			}
 			if(name.replace(/^\s*|\s*$/mg,"").length===0){
+				return false;
+			}
+			
+			if(storages.moduleLoad[name]){
 				return false;
 			}
 			
