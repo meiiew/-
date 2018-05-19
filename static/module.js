@@ -15,6 +15,7 @@
 
 (function(){
 	var storages = {
+		v : "",
 		moduleLoad : {},//已经加载的模块
 		moduleMissingName : [],//给未加载依赖，添加依赖名称（用来判断define没有模块名字id）
 		requireData : {},//返回的函数，多个引用使用同一个require
@@ -123,13 +124,13 @@
 			
 			if(toolLibrary.isUrlScript(src)){//js
 				for(var i=0,len=snapList.length;i<len;i++){//去重，已经加载过
-					if(snapList[i].src === src || ~snapList[i].src.indexOf(src)){
+					if(snapList[i].src === src || ~snapList[i].src.indexOf(src.replace(/(\.\.\/|\.\/)*/img,""))){
 						return true;
 					}
 				}
 			}else if(toolLibrary.isUrlCss(src)){//css
 				for(var i=0,len=linkCssList.length;i<len;i++){
-					if(linkCssList[i].href === src || ~linkCssList[i].href.indexOf(src)){
+					if(linkCssList[i].href === src || ~linkCssList[i].href.indexOf(src.replace(/(\.\.\/|\.\/)*/img,""))){
 						return true;
 					}
 				}
@@ -146,7 +147,7 @@
 			
 			if(toolLibrary.isUrlScript(src)){//js
 				script = document.createElement("script");
-				script.src=src;
+				script.src=src+"?v="+storages.v;
 				script.type="text/javascript";
 				script.charset="UTF-8";
 				script.async="true";
@@ -154,7 +155,7 @@
 				isLoadSuccess();
 			}else{
 				styles = document.createElement('link');
-				styles.href = src;
+				styles.href = src+"?v="+storages.v;
 				styles.rel = 'stylesheet';
 				styles.type = 'text/css';
 				$head.appendChild(styles);
@@ -461,8 +462,10 @@
 			            if (xmlAjax.readyState == 4 && (xmlAjax.status === 200 || xmlAjax.status === 304)) {//readyState == 4说明请求已完成
 			            	try{
 			            		storages.moduleJson = JSON.parse(xmlAjax.responseText).library;
+			            		storages.v = JSON.parse(xmlAjax.responseText).v;
 			            	}catch(e){
 			            		storages.moduleJson = {};
+			            		storages.v = "bate";
 			            	}
 			            	state.isModuleJson = true;
 			            	logicMain.cleanJsonEntrust();
